@@ -10,7 +10,7 @@ Usage
 -----
 
 * Install python-boto3
-* Create a dedicated key pair via AWS IAM (read-only access for EC2 and ELB)
+* Create a dedicated key pair via AWS IAM (read-only access for EC2)
 * Put this key pair in nagios home .aws/config file
 * Launch the scripts with --help for more help
 
