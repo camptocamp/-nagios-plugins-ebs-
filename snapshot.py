@@ -70,7 +70,7 @@ class ebs_snapshot:
             progress = snap['Progress']
             if progress != '100%':
                 self.out_status = 3
-                self.out_msg    = 'UNKNOWN: apparently snapshot in progress, check later'
+                self.out_msg    = 'UNKNOWN: apparently snapshot in progress (%s), check later' % progress['Progress']
             if snap['StartTime'].date() != datetime.today().date():
                 self.__print('No snapshot for today - checking threshold')
                 if datetime.today().hour > self.__threshold:
