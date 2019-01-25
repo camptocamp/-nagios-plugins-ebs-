@@ -23,7 +23,7 @@ class ebs_snapshot:
         self.__snaps = []
 
         self.out_status = 0
-        self.out_msg = 'EBS Snapshots: up-to-date'
+        self.out_msg = 'OK: snapshot up-to-date'
 
         self.__ec2_client = session.client('ec2')
         self.__get_snapshots()
@@ -64,18 +64,23 @@ class ebs_snapshot:
             self.out_msg    = 'CRITICAL: no snapshot for "%s"' % self.__pattern
         elif len(self.__snaps['Snapshots']) > 1:
             self.out_status = 3
-            self.out_msg    = 'UNKNON: more than two snapshot for "%s", unable to parse' % self.__pattern
+            self.out_msg    = 'UNKNOWN: more than one snapshot for "%s", unable to parse' % self.__pattern
         else:
             snap = self.__snaps['Snapshots'][0]
+            snap_age = (datetime.utcnow() - snap['StartTime'].replace(tzinfo=None)).total_seconds() / 3600
             progress = snap['Progress']
-            if progress != '100%':
-                self.out_status = 3
-                self.out_msg    = 'UNKNOWN: apparently snapshot in progress (%s), check later' % progress['Progress']
-            if snap['StartTime'].date() != datetime.today().date():
-                self.__print('No snapshot for today - checking threshold')
-                if datetime.today().hour > self.__threshold:
-                    self.out_status = 2
-                    self.out_msg    = 'CRITICAL: no current snapshot for "%s"' % self.__pattern
+            if snap_age >= 24*7+2:
+                self.out_status = 2
+                self.out_msg    = 'CRITICAL: no current snapshot for "%s" (%.1d days old)' % (self.__pattern, snap_age/24)
+            elif progress != '100%' and snap_age < 5:
+                self.out_status = 0
+                self.out_msg    = 'OK: snapshot in progress (%s)' % progress['Progress']
+            elif snap['StartTime'].date() != datetime.today().date() and datetime.today().hour > self.__threshold:
+                self.out_status = 2
+                self.out_msg    = 'CRITICAL: no current snapshot for "%s" (%.1d days old)' % (self.__pattern, snap_age/24)
+            else:
+                self.out_status = 0
+                self.out_msg = 'OK: snapshot up-to-date'
 
 
 
