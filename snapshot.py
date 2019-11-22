@@ -20,6 +20,7 @@ class ebs_snapshot:
         self.__g_snapshot_count = Gauge('ebs_snapshot_count', 'number of snapshots found',['pattern'])
         self.__g_snapshot_age = Gauge('ebs_snapshot_age', 'age of the lastet ' +self.__pattern + ' snapshot',['pattern'])
         self.__g_snapshot_progress = Gauge('ebs_snapshot_progress', 'progress of the lastet snapshot [%] ' +self.__pattern + ' snapshot',['pattern'])
+        self.__g_snapshot_start_epoch = Gauge('ebs_snapshot_stat_epoch', 'start time (epoch) of of the snapshot ' +self.__pattern + ' snapshot',['pattern'])
         self.__connect_and_check()
 
     def __connect_and_check(self):
@@ -79,6 +80,7 @@ class ebs_snapshot:
             snap_age = (datetime.utcnow() - snap['StartTime'].replace(tzinfo=None)).total_seconds() / 3600
             self.__g_snapshot_age.labels(self.__pattern).set(snap_age)
             progress = snap['Progress']
+            self.__g_snapshot_start_epoch.labels(self.__pattern).set(time.mktime(snap['StartTime'].date().timetuple()))
             self.__g_snapshot_progress.labels(self.__pattern).set(float(progress.strip('%')))
             if snap_age >= 24*7+2:
                 self.out_status = 2
